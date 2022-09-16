@@ -1,7 +1,12 @@
+help_intro() {
+  echo "Generate sample 'add to PATH' file"
+}
+
+# halt outer iffe
+[[ -n "${TPLDIR}" ]] || return
+
 pathadd_help() {
-  print_decore "
-    Generate sample 'add to PATH' file to stdout or DEST files
-  "
+  help_intro
   echo
   get_path_force_help_usage
   echo
@@ -10,10 +15,7 @@ pathadd_help() {
   get_path_force_help_demo
 }
 
-trap_help_opt pathadd_help "${@}" && exit $? || {
-  declare rc=$?
-  [[ $rc -gt 1 ]] && exit $rc
-}
+mkconf_trap_help_opt pathadd_help "${@}"
 
 declare -A ARGS
 trap_path_force_args ARGS "${@}" || exit $?

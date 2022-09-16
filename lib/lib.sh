@@ -24,7 +24,7 @@
   # * print_decore MSG...               (stdin MSG is supported)
   # * log_* [-t LEVEL_TAG] [--] MSG...  (stdin MSG is supported)
   # * trap_help_opt HELP_FUNCTION ARG...
-  # * trap_fatal [--rc RC] [--] [MSG...]
+  # * trap_fatal RC [MSG...]
   # * tag_node_get [--prefix PREFIX] [--suffix SUFFIX] [--strip] [--] TAG TEXT...
   #   (stdin TEXT is supported)
   # * tag_node_rm [--prefix PREFIX] [--suffix SUFFIX] [--] TAG TEXT...
@@ -198,18 +198,17 @@
   ##### TRAPPING #####
   ####################
 
-  # Execute HELP_FUNCTION when first arg is -h, -? or --help
+  # Detect one of help options: -h, -?, --help
   #
   # USAGE:
-  #   trap_help_opt HELP_FUNCTION ARG...
+  #   trap_help_opt ARG...
   # RC:
   #   * 0 - help option detected
   #   * 1 - no help option
-  #   * 2 - help option detected, but there are extra args, err will be logged
+  #   * 2 - help option detected, but there are extra args,
+  #         invalid args are printed to stdout
   trap_help_opt() {
-    local help_func="${1}"
     local is_help=false
-    shift
 
     [[ "${1}" =~ ^(-h|-\?|--help)$ ]] \
       && is_help=true && shift
@@ -224,49 +223,53 @@
     ! ${is_help} && return 1
 
     ${is_help} && [[ ${#inval[@]} -gt 0 ]] && {
-      log_err "Invalid or incompatible arguments:" \
-              "$(printf -- '* %s\n' "${inval[@]}")"
+      _print_stdout "${inval[@]}"
       return 2
     }
 
-    ${help_func}
     return 0
   }
 
-  # Exit with RC if it's > 0. If RC not provided will use last
-  # return code. If no MSG, no err message will be logged.
+  # Exit with RC if it's > 0. If no MSG, no err message will be logged.
   # * RC is required to be numeric!
   # * not to be used in scripts sourced to ~/.bashrc!
   #
+  # Options:
+  #   --decore  - apply print_decore over input messages
   # USAGE:
-  #   trap_fatal [--rc RC] [--] [MSG...]
+  #   trap_fatal [--decore] [--] RC [MSG...]
   trap_fatal() {
-    local rc=$?
+    local rc
     local -a msgs
+    local decore=false
 
     local endopts=false
-    local arg
-    while :; do
+    local arg; while :; do
       [[ -n "${1+x}" ]] || break
       ${endopts} && arg='*' || arg="${1}"
-
       case "${arg}" in
-        --    ) endopts=true ;;
-        --rc  ) shift; rc="${1:-"${rc}"}" ;;
-        *     ) msgs+=("${1}") ;;
+        --        ) endopts=true ;;
+        --decore  ) decore=true ;;
+        *         ) [[ -z "${rc+x}" ]] && rc="${1}" || msgs+=("${1}") ;;
       esac
-
       shift
     done
 
+    [[ -n "${rc+x}" ]] || return 0
     [[ $rc -gt 0 ]] || return ${rc}
-    [[ ${#msgs[@]} -gt 0 ]] && log_err "${msgs[@]}"
+
+    [[ ${#msgs[@]} -gt 0 ]] && {
+      local filter=(_print_stdout)
+      ${decore} && filter=(print_decore)
+      "${filter[@]}" "${msgs[@]}" | _log_type fatal
+    }
+
     exit ${rc}
   }
 
-  #######################
-  ##### RETURN CODE #####
-  #######################
+  ################
+  ##### TAGS #####
+  ################
 
   # USAGE:
   #   tag_node_get [--prefix PREFIX] [--suffix SUFFIX] \
@@ -672,38 +675,22 @@
 
 mkconf_help() {
   print_decore "
-    Generate configurations. To view help for a module issue:
-    \`\`\`sh
-    ${TOOLNAME} MODULE -h
-    \`\`\`
+    Generate configurations.
    .
     USAGE
     =====
-   .${TOOLNAME} OPTIONS
-   .${TOOLNAME} MODULE [MODULE_ARGS]
+   .  # List modules
+   .  ${TOOLNAME} list
    .
-    OPTIONS
-    =======
-    -l, --list  List available modules
+   .  # View module help
+   .  ${TOOLNAME} MODULE -h
+   .
+   .  # Run module
+   .  ${TOOLNAME} MODULE [MODULE_ARGS]
    .
     MODULES
     =======
   " "$(sed 's/^/* /' <<< "${MODULE_LIST}")"
-}
-
-trap_mkconf_opts() {
-  while :; do
-    [[ -n "${1+x}" ]] || break
-
-    case "${1}" in
-      -l|--list ) print_decore "${MODULE_LIST}"; return 0 ;;
-      *         ) ;;
-    esac
-
-    shift
-  done
-
-  return 1
 }
 
 trap_path_force_args() {
@@ -760,7 +747,7 @@ get_path_force_help_usage() {
   print_decore "
     USAGE
     =====
-   .${TOOLNAME} ${MODULE} [-f] [--] [DEST...]
+   .  ${TOOLNAME} ${MODULE} [-f] [--] [DEST...]
   "
 }
 
@@ -777,13 +764,11 @@ get_path_force_help_demo() {
   print_decore "
     DEMO
     ====
-    \`\`\`sh
-    # generate to stdout
-   .${TOOLNAME} ${MODULE}
+   .  # generate to stdout
+   .  ${TOOLNAME} ${MODULE}
    .
-    # generate to multiple destinations
-   .${TOOLNAME} ${MODULE} file1 file2
-    \`\`\`
+   .  # generate to multiple destinations
+   .  ${TOOLNAME} ${MODULE} file1 file2
   "
 }
 
@@ -808,4 +793,19 @@ mkconf_file2dest() {
       >(template_compile -o -f --failed 'Failed: ' | log_err) \
       >/dev/null
   ) | cat
+}
+
+mkconf_trap_help_opt() {
+  local help_func="${1}"
+  local inval
+
+  inval="$(trap_help_opt "${@:2}")" \
+    && { ${help_func}; exit 0; }
+
+  local rc=$?
+  [[ $rc -gt 1 ]] && {
+    trap_fatal -- ${rc} \
+      "Invalid or incompatible arguments:" \
+      "$(sed 's/^/* /' <<< "${inval}")"
+  }
 }

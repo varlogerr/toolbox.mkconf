@@ -1,10 +1,17 @@
+help_intro() {
+  echo "Generate basic bash library"
+}
+
+# halt outer iffe
+[[ -n "${TPLDIR}" ]] || return
+
 bash_lib_help() {
+  help_intro
+  echo
   print_decore "
-    Generate basic bash library to stdout or DEST files
-   .
     USAGE
     =====
-    ${TOOLNAME} ${MODULE} [-f] [--prefix PREFIX] [--] [DEST...]
+   .  ${TOOLNAME} ${MODULE} [-f] [--prefix PREFIX] [--] [DEST...]
    .
     OPTIONS
     =======
@@ -67,10 +74,7 @@ trap_bash_lib_args() {
   return 0
 }
 
-trap_help_opt bash_lib_help "${@}" && exit $? || {
-  declare rc=$?
-  [[ $rc -gt 1 ]] && exit $rc
-}
+mkconf_trap_help_opt bash_lib_help "${@}"
 
 declare -A ARGS
 trap_bash_lib_args ARGS "${@}" || exit $?

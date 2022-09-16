@@ -2,25 +2,25 @@
 LOG_TOOLNAME="${TOOLNAME}"
 . "${LIBDIR}/lib.sh"
 
-trap_help_opt mkconf_help "${@}" && exit $? || {
-  declare rc=$?
-  [[ $rc -gt 1 ]] && exit $rc
-}
+mkconf_trap_help_opt mkconf_help "${@}"
 
-[[ -n "${1:+x}" ]] || trap_fatal --rc $? "Module required"
+[[ -n "${1:+x}" ]] || trap_fatal $? "Module required"
 
 # after this section we
 # * either have a module
 # * or catch some mkconf flag and exit
 # * or fail
-declare MODULE
-grep -qFx -f <(echo "${MODULE_LIST}") <<< "${1}" && {
-  MODULE="${1}"
-  shift
-} || {
-  trap_mkconf_opts "${@}" && exit $?
-  trap_fatal --rc $? "Invalid module: ${1}"
-}
+grep -qFx -f <(echo "${MODULE_LIST}") <<< "${1}" \
+  || trap_fatal $? "Invalid module: ${1}"
 
-declare TPLDIR="${MODDIR}/${MODULE}/tpl"
-. "${MODDIR}/${MODULE}/run.sh"
+declare MODULE="${1}"
+shift
+
+_iife_run() {
+  unset _iife_run
+
+  # TPLDIR is only available when running
+  # through the current iife
+  declare TPLDIR="${MODDIR}/${MODULE}/tpl"
+  . "${MODDIR}/${MODULE}/run.sh"
+}; _iife_run "${@}"

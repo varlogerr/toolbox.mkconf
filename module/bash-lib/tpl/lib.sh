@@ -197,18 +197,17 @@ shlib_log_err() {
 ##### TRAPPING #####
 ####################
 
-# Execute HELP_FUNCTION when first arg is -h, -? or --help
+# Detect one of help options: -h, -?, --help
 #
 # USAGE:
-#   shlib_trap_help_opt HELP_FUNCTION ARG...
+#   shlib_trap_help_opt ARG...
 # RC:
 #   * 0 - help option detected
 #   * 1 - no help option
-#   * 2 - help option detected, but there are extra args, err will be logged
+#   * 2 - help option detected, but there are extra args,
+#         invalid args are printed to stdout
 shlib_trap_help_opt() {
-  local help_func="${1}"
   local is_help=false
-  shift
 
   [[ "${1}" =~ ^(-h|-\?|--help)$ ]] \
     && is_help=true && shift
@@ -223,34 +222,53 @@ shlib_trap_help_opt() {
   ! ${is_help} && return 1
 
   ${is_help} && [[ ${#inval[@]} -gt 0 ]] && {
-    shlib_log_err "Invalid or incompatible arguments:" \
-            "$(printf -- '* %s\n' "${inval[@]}")"
+    _shlib_print_stdout "${inval[@]}"
     return 2
   }
 
-  ${help_func}
   return 0
 }
 
-# Exit with RC if it's > 0. If RC not provided will use last
-# return code. If no MSG, no err message will be logged.
+# Exit with RC if it's > 0. If no MSG, no err message will be logged.
 # * RC is required to be numeric!
 # * not to be used in scripts sourced to ~/.bashrc!
 #
+# Options:
+#   --decore  - apply print_decore over input messages
 # USAGE:
-#   shlib_trap_fatal RC [MSG...]
-shlib_trap_fatal() {
-  local rc=$1
-  local -a msgs=("${@:2}")
+#   trap_fatal [--decore] [--] RC [MSG...]
+trap_fatal() {
+  local rc
+  local -a msgs
+  local decore=false
 
+  local endopts=false
+  local arg; while :; do
+    [[ -n "${1+x}" ]] || break
+    ${endopts} && arg='*' || arg="${1}"
+    case "${arg}" in
+      --        ) endopts=true ;;
+      --decore  ) decore=true ;;
+      *         ) [[ -z "${rc+x}" ]] && rc="${1}" || msgs+=("${1}") ;;
+    esac
+    shift
+  done
+
+  [[ -n "${rc+x}" ]] || return 0
   [[ $rc -gt 0 ]] || return ${rc}
-  [[ ${#msgs[@]} -gt 0 ]] && shlib_log_err "${msgs[@]}"
+
+  [[ ${#msgs[@]} -gt 0 ]] && {
+    local filter=(_print_stdout)
+    ${decore} && filter=(print_decore)
+    "${filter[@]}" "${msgs[@]}" | _log_type fatal
+  }
+
   exit ${rc}
 }
 
-#######################
-##### RETURN CODE #####
-#######################
+################
+##### TAGS #####
+################
 
 # USAGE:
 #   shlib_tag_node_get [--prefix PREFIX] [--suffix SUFFIX] \

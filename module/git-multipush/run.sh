@@ -1,7 +1,9 @@
+help_intro() {
+  echo "Generate template for push to multiple git repos"
+}
+
 git_multipush_help() {
-  print_decore "
-    Generate template for push to multiple git repos
-  "
+  help_intro
   echo
   get_path_force_help_usage
   echo
@@ -10,10 +12,7 @@ git_multipush_help() {
   get_path_force_help_demo
 }
 
-trap_help_opt git_multipush_help "${@}" && exit $? || {
-  declare rc=$?
-  [[ $rc -gt 1 ]] && exit $rc
-}
+mkconf_trap_help_opt git_multipush_help "${@}"
 
 declare -A ARGS
 trap_path_force_args ARGS "${@}" || exit $?

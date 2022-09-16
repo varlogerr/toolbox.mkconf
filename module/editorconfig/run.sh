@@ -1,7 +1,12 @@
+help_intro() {
+  echo "Generate sample editorconfig"
+}
+
+# halt outer iffe
+[[ -n "${TPLDIR}" ]] || return
+
 editorconfig_help() {
-  print_decore "
-    Generate sample editorconfig to stdout or DEST files
-  "
+  help_intro
   echo
   get_path_force_help_usage
   echo
@@ -10,10 +15,7 @@ editorconfig_help() {
   get_path_force_help_demo
 }
 
-trap_help_opt editorconfig_help "${@}" && exit $? || {
-  declare rc=$?
-  [[ $rc -gt 1 ]] && exit $rc
-}
+mkconf_trap_help_opt editorconfig_help "${@}"
 
 declare -A ARGS
 trap_path_force_args ARGS "${@}" || exit $?

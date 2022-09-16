@@ -1,7 +1,12 @@
+help_intro() {
+  echo "Generate sample readme file"
+}
+
+# halt outer iffe
+[[ -n "${TPLDIR}" ]] || return
+
 readme_help() {
-  print_decore "
-    Generate sample readme file to stdout or DEST files
-  "
+  help_intro
   echo
   get_path_force_help_usage
   echo
@@ -10,10 +15,7 @@ readme_help() {
   get_path_force_help_demo
 }
 
-trap_help_opt readme_help "${@}" && exit $? || {
-  declare rc=$?
-  [[ $rc -gt 1 ]] && exit $rc
-}
+mkconf_trap_help_opt readme_help "${@}"
 
 declare -A ARGS
 trap_path_force_args ARGS "${@}" || exit $?
