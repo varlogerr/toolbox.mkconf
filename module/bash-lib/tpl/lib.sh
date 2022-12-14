@@ -256,11 +256,13 @@ shlib_text_trim() {
 # remove blank and space only lines
 shlib_text_rmblank() {
   shlib_print_stdout "${@}" | grep -vx '\s*'
+  return 0
 }
 
 # apply trim and rmblank
 shlib_text_clean() {
   shlib_text_trim "${@}" | shlib_text_rmblank
+  return 0
 }
 
 # Decoreate text:
