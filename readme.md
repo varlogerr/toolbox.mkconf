@@ -1,6 +1,6 @@
 # <a id="top"></a>mkconfig
 
-Tired from copy-pasting some basic configurations from one project to another? Generate them instead with this tool. By the way the dummy of this readme is generated with `mkconfig readme ./readme.md` command.
+Tired from copy-pasting some basic configurations from one project to another? Generate them instead with this tool. By the way the dummy of this readme is generated with `mkconfig.sh readme ./readme.md` command.
 
 * [Quick demo](#quick-demo)
 * [Installation](#installation)
@@ -11,7 +11,7 @@ Tired from copy-pasting some basic configurations from one project to another? G
 
 ```sh
 # Generate a sample readme file
-mkconfig readme readme.md
+mkconfig.sh readme readme.md
 ```
 
 [To top]
@@ -22,7 +22,7 @@ mkconfig readme readme.md
 # Checkout the repo
 sudo git clone https://github.com/varlogerr/toolbox.mkconfig.git /opt/varlog/mkconfig
 # Source to .bashrc
-echo '. /opt/varlog/mkconfig/bin/mkconfig' >> ~/.bashrc
+echo '. /opt/varlog/mkconfig/bin/mkconfig.sh' >> ~/.bashrc
 # Reload .bashrc
 . ~/.bashrc
 ```
@@ -35,9 +35,9 @@ Alternatively you may want to install it to some PATH directory, then after chec
 
 ```sh
 # Symlink to a PATH directory
-sudo ln -s /opt/varlog/mkconfig/bin/mkconfig /use/local/bin/mkconfig
+sudo ln -s /opt/varlog/mkconfig/bin/mkconfig.sh /use/local/bin/mkconfig.sh
 # Source to .bashrc
-echo '. /use/local/bin/mkconfig' >> ~/.bashrc
+echo '. /use/local/bin/mkconfig.sh' >> ~/.bashrc
 # Reload .bashrc
 . ~/.bashrc
 ```
@@ -48,11 +48,11 @@ echo '. /use/local/bin/mkconfig' >> ~/.bashrc
 
 ```sh
 # View the tool help
-mkconfig -h
+mkconfig.sh -h
 # List available module
-mkconfig -l
+mkconfig.sh list
 # View a module help
-mkconfig MODULE -h
+mkconfig.sh MODULE -h
 ```
 
 [To top]

@@ -1,4 +1,4 @@
-_mkconf_complete() {
+_mkconfig_complete() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   local prev="${COMP_WORDS[COMP_CWORD-1]}"
 

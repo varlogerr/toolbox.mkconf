@@ -35,7 +35,7 @@ _iife_pathadd() {
 
   # add completion
   . "${LIBDIR}/complete.sh"
-  complete -o default -F _mkconf_complete "$(basename -- "${1}")" 2>/dev/null
+  complete -o default -F _mkconfig_complete "$(basename -- "${1}")" 2>/dev/null
 
   return 0
 } && _iife_completion "${@}"
